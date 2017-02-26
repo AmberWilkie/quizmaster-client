@@ -4,13 +4,6 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
   })
 
   .controller('QuizController', function ($scope, $ionicModal, ActionCableChannel, $ionicLoading) {
-    // With the new view caching in Ionic, Controllers are only called
-    // when they are recreated or on app start, instead of every page change.
-    // To listen for when this page is active (for example, to refresh data),
-    // listen for the $ionicView.enter event:
-    //
-    //$scope.$on('$ionicView.enter', function(e) {
-    //});
     var consumer, callback, quiz, team_name;
 
     $scope.findQuiz = function () {
@@ -19,8 +12,13 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
           duration: 3000
         }
       );
+
+      // Grab code from form
       code = angular.element(document.querySelector('#codeEntry'))[0].value;
+
       consumer = new ActionCableChannel('QuizChannel');
+
+      // Perform these actions after receiving information from the server
       callback = function (obj) {
         if (obj != null) {
           $scope.quiz = obj;
@@ -38,6 +36,7 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
               });
             });
         } else {
+          // Display error message - no quiz associated with code
           $ionicLoading.hide();
           angular.element(document.querySelector('#badCode'))[0].style.display = "inline";
         }
@@ -51,6 +50,7 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
 
     };
 
+    // Subscribe to the quiz and ready the page for ActionCable messages (displayed in #message)
     var subscribeToQuiz = function () {
       callback = function (data) {
         if (data.welcome == 'true') {
@@ -59,6 +59,8 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
           angular.element(document.querySelector('#message')).html(data);
         }
       };
+
+      // Subscribe to a specific quiz.
       consumer = new ActionCableChannel('QuizChannel', {quiz_id: $scope.quiz.id});
       consumer.subscribe(callback)
         .then(function () {
@@ -76,6 +78,8 @@ angular.module('quizmaster.controllers', ['ngActionCable'])
             }
 
           };
+
+          // Get answer from view, send via ActionCable to server
           this.submitAnswer = function () {
             var dataset, quiz, answer, question, team, answer_hash;
             dataset = angular.element(document.querySelector('#info'))[0];
